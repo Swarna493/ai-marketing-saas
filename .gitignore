@@ -1,0 +1,11 @@
+﻿.env
+server/.env
+client/.env
+server/venv/
+server/__pycache__/
+*.pyc
+server/marketmate.db
+client/node_modules/
+client/dist/
+.DS_Store
+Thumbs.db
