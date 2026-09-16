@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
-const API_BASE = 'http://127.0.0.1:5000'
+const API_BASE = 'https://ai-marketing-saas-p5e7.onrender.com'
 
 function App() {
   const [activeTab, setActiveTab] = useState('caption')
