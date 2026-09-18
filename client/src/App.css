@@ -9,6 +9,19 @@
 
 body { margin: 0; min-width: 320px; background: #f7f5ff; }
 button, input, select, textarea { font: inherit; }
+input,
+select,
+textarea {
+  color: #222;
+  -webkit-text-fill-color: #222;
+  background: #fff;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #777;
+  opacity: 1;
+}
 button { cursor: pointer; }
 
 .app-shell { min-height: 100vh; display: flex; background: #f7f5ff; }
