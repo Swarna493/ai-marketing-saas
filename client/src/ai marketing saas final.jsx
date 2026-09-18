@@ -4,124 +4,48 @@ import './App.css'
 const API_BASE = 'https://ai-marketing-saas-p5e7.onrender.com'
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home')
-
-  const modules = [
-    { id: 'caption', label: 'Caption', icon: '✍️' },
-    { id: 'adcopy', label: 'Ad Copy', icon: '📢' },
-    { id: 'productdesc', label: 'Product Description', icon: '🛍️' },
-    { id: 'slogan', label: 'Slogan', icon: '💡' },
-    { id: 'hashtag', label: 'Hashtags', icon: '#️⃣' },
-    { id: 'seo', label: 'SEO Writer', icon: '🔎' },
-    { id: 'email', label: 'Email', icon: '✉️' },
-    { id: 'competitor', label: 'Competitor', icon: '📊' },
-    { id: 'image', label: 'Image', icon: '🖼️' },
-    { id: 'landing', label: 'Landing Page', icon: '🌐' },
+  const [activeTab, setActiveTab] = useState('caption')
+  const tabs = [
+        { id: 'adcopy', label: 'Ad Copy' },
+    { id: 'productdesc', label: 'Product Desc' },
+    { id: 'slogan', label: 'Slogan' },
+    { id: 'caption', label: 'Caption' },
+    { id: 'hashtag', label: 'Hashtags' },
+    { id: 'seo', label: 'SEO Writer' },
+    { id: 'email', label: 'Email' },
+    { id: 'competitor', label: 'Competitor' },
+    { id: 'image', label: 'Image' },
+    { id: 'landing', label: 'Landing Page' },
+    { id: 'scheduler', label: 'Scheduler' },
+    { id: 'analytics', label: 'Analytics' },
+    { id: 'history', label: 'History' },
   ]
-
-  const openModule = (id) => setActiveTab(id)
-
-  const renderContent = () => {
-    if (activeTab === 'home') {
-      return (
-        <div className="dashboard-page">
-          <section className="welcome-banner">
-            <div>
-              <p className="eyebrow">AI-POWERED MARKETING</p>
-              <h1>Welcome to MarketMate AI ✨</h1>
-              <p>Create engaging marketing content faster with AI-powered tools.</p>
-              <button className="primary-btn" onClick={() => setActiveTab('caption')}>
-                ✨ Generate Content
-              </button>
-            </div>
-            <div className="banner-icon">✨</div>
-          </section>
-
-          <section className="dashboard-section">
-            <div className="section-heading">
-              <div>
-                <h2>Generate Your Marketing Content</h2>
-                <p>Choose a module and start creating content for your business.</p>
-              </div>
-            </div>
-
-            <div className="module-grid">
-              {modules.map((module) => (
-                <button key={module.id} className="module-card" onClick={() => openModule(module.id)}>
-                  <span className="module-icon">{module.icon}</span>
-                  <span className="module-title">{module.label}</span>
-                  <span className="module-arrow">→</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="quick-actions">
-            <h2>Quick Actions</h2>
-            <div className="quick-grid">
-              <button onClick={() => setActiveTab('caption')}>✍️ Create Caption</button>
-              <button onClick={() => setActiveTab('adcopy')}>📢 Write Ad Copy</button>
-              <button onClick={() => setActiveTab('seo')}>🔎 Generate SEO Content</button>
-              <button onClick={() => setActiveTab('history')}>📜 View History</button>
-            </div>
-          </section>
-        </div>
-      )
-    }
-
-    if (activeTab === 'caption') return <CaptionGenerator />
-    if (activeTab === 'adcopy') return <AdCopyGenerator />
-    if (activeTab === 'productdesc') return <ProductDescGenerator />
-    if (activeTab === 'slogan') return <SloganGenerator />
-    if (activeTab === 'hashtag') return <HashtagGenerator />
-    if (activeTab === 'seo') return <SEOWriter />
-    if (activeTab === 'email') return <EmailWriter />
-    if (activeTab === 'competitor') return <CompetitorAnalysis />
-    if (activeTab === 'image') return <ImageGenerator />
-    if (activeTab === 'landing') return <LandingPageBuilder />
-    if (activeTab === 'scheduler') return <Scheduler />
-    if (activeTab === 'analytics') return <Analytics />
-    if (activeTab === 'history') return <History />
-    return null
-  }
-
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand" onClick={() => setActiveTab('home')}>
-          <div className="brand-mark">✨</div>
-          <div>
-            <strong>MarketMate</strong>
-            <span>AI Marketing SaaS</span>
-          </div>
+    <div className="app-wrapper">
+      <nav className="navbar">
+        <h2 className="logo">✨ MarketMate AI</h2>
+        <div className="nav-links">
+          {tabs.map(tab => (
+            <button key={tab.id} className={activeTab === tab.id ? 'active' : ''} onClick={() => setActiveTab(tab.id)}>
+              {tab.label}
+            </button>
+          ))}
         </div>
-
-        <nav className="sidebar-nav">
-          <button className={activeTab === 'home' ? 'side-link active' : 'side-link'} onClick={() => setActiveTab('home')}>🏠 <span>Home</span></button>
-          <button className={modules.some(m => m.id === activeTab) ? 'side-link active' : 'side-link'} onClick={() => setActiveTab('caption')}>✨ <span>Generate Content</span></button>
-          <button className={activeTab === 'history' ? 'side-link active' : 'side-link'} onClick={() => setActiveTab('history')}>📜 <span>History</span></button>
-          <button className={activeTab === 'scheduler' ? 'side-link active' : 'side-link'} onClick={() => setActiveTab('scheduler')}>📅 <span>Scheduler</span></button>
-          <button className={activeTab === 'analytics' ? 'side-link active' : 'side-link'} onClick={() => setActiveTab('analytics')}>📊 <span>Analytics</span></button>
-        </nav>
-
-        <div className="sidebar-bottom">
-          <div className="user-mini">
-            <div className="avatar">U</div>
-            <div><strong>User</strong><span>Marketing Workspace</span></div>
-          </div>
-          <button className="logout-btn" onClick={() => setActiveTab('home')}>🚪 <span>Logout</span></button>
-        </div>
-      </aside>
-
-      <div className="main-area">
-        <header className="topbar">
-          <div>
-            <span className="topbar-label">MARKETING WORKSPACE</span>
-            <h2>{activeTab === 'home' ? 'Dashboard' : (modules.find(m => m.id === activeTab)?.label || activeTab.charAt(0).toUpperCase() + activeTab.slice(1))}</h2>
-          </div>
-          <div className="top-user">👤 <span>User</span></div>
-        </header>
-        <main className="content-area">{renderContent()}</main>
+      </nav>
+      <div className="page-content">
+                {activeTab === 'adcopy' && <AdCopyGenerator />}
+        {activeTab === 'productdesc' && <ProductDescGenerator />}
+        {activeTab === 'slogan' && <SloganGenerator />}
+        {activeTab === 'caption' && <CaptionGenerator />}
+        {activeTab === 'hashtag' && <HashtagGenerator />}
+        {activeTab === 'seo' && <SEOWriter />}
+        {activeTab === 'email' && <EmailWriter />}
+        {activeTab === 'competitor' && <CompetitorAnalysis />}
+        {activeTab === 'image' && <ImageGenerator />}
+        {activeTab === 'landing' && <LandingPageBuilder />}
+        {activeTab === 'scheduler' && <Scheduler />}
+        {activeTab === 'analytics' && <Analytics />}
+        {activeTab === 'history' && <History />}
       </div>
     </div>
   )
@@ -694,6 +618,7 @@ function History() {
   )
 }
 
+export default App
 function AdCopyGenerator() {
   const [product, setProduct] = useState('')
   const [platform, setPlatform] = useState('Google Ads')
@@ -857,5 +782,3 @@ function SloganGenerator() {
     </div>
   )
 }
-
-export default App
