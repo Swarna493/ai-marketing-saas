@@ -19,8 +19,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-2.5-flash:generateContent?key="
-    + (GEMINI_API_KEY or "")
+    "gemini-2.5-flash:generateContent"
 )
 
 
@@ -59,11 +58,12 @@ def generate_caption():
                 "error": "Topic is required"
             }), 400
 
-        # Check API key
+        # Check Gemini API key
         if not GEMINI_API_KEY:
             return jsonify({
                 "error": "GEMINI_API_KEY is not configured on the server"
             }), 500
+
 
         # ==============================
         # RAG RETRIEVAL
@@ -76,7 +76,11 @@ def generate_caption():
             top_k=3
         )
 
-        # Create RAG context
+
+        # ==============================
+        # CREATE RAG CONTEXT
+        # ==============================
+
         rag_context = "\n\n".join([
             f"""
 Product: {item.get('product', '')}
@@ -85,13 +89,17 @@ Target Audience: {item.get('target_audience', '')}
 Platform: {item.get('platform', '')}
 Tone: {item.get('tone', '')}
 Keywords: {item.get('keywords', '')}
+Brand Style: {item.get('brand_style', '')}
 """
             for item in retrieved_results
         ])
 
-        # If no dataset results
+
         if not rag_context:
-            rag_context = "No specific marketing information was found in the dataset."
+            rag_context = (
+                "No specific marketing information was found "
+                "in the dataset."
+            )
 
 
         # ==============================
@@ -139,16 +147,28 @@ Do not include hashtags in this response.
 
         response = requests.post(
             GEMINI_URL,
+            headers={
+                "x-goog-api-key": GEMINI_API_KEY,
+                "Content-Type": "application/json"
+            },
             json=payload,
             timeout=60
         )
 
+
         print("Gemini status:", response.status_code)
         print("Gemini response:", response.text)
 
+
+        # ==============================
+        # READ GEMINI RESPONSE
+        # ==============================
+
         try:
             result = response.json()
+
         except ValueError:
+
             return jsonify({
                 "error": "Gemini returned an invalid response",
                 "response": response.text
@@ -156,7 +176,7 @@ Do not include hashtags in this response.
 
 
         # ==============================
-        # HANDLE GEMINI ERROR
+        # GEMINI ERROR
         # ==============================
 
         if response.status_code != 200:
@@ -167,29 +187,49 @@ Do not include hashtags in this response.
 
 
         # ==============================
-        # GET GENERATED CAPTION
+        # GET GENERATED CONTENT
         # ==============================
 
-        candidates = result.get("candidates", [])
+        candidates = result.get(
+            "candidates",
+            []
+        )
 
         if not candidates:
+
             return jsonify({
                 "error": "Gemini did not return any generated content",
                 "details": result
             }), 500
 
-        content = candidates[0].get("content", {})
-        parts = content.get("parts", [])
+
+        content = candidates[0].get(
+            "content",
+            {}
+        )
+
+        parts = content.get(
+            "parts",
+            []
+        )
+
 
         if not parts:
+
             return jsonify({
                 "error": "Gemini response does not contain text",
                 "details": result
             }), 500
 
-        caption = parts[0].get("text", "")
+
+        caption = parts[0].get(
+            "text",
+            ""
+        )
+
 
         if not caption:
+
             return jsonify({
                 "error": "Generated caption is empty"
             }), 500
@@ -206,7 +246,7 @@ Do not include hashtags in this response.
 
 
     # ==============================
-    # GENERAL ERROR
+    # TIMEOUT ERROR
     # ==============================
 
     except requests.exceptions.Timeout:
@@ -215,11 +255,23 @@ Do not include hashtags in this response.
             "error": "Gemini API request timed out"
         }), 504
 
+
+    # ==============================
+    # REQUEST ERROR
+    # ==============================
+
     except requests.exceptions.RequestException as e:
+
+        print("Gemini request error:", str(e))
 
         return jsonify({
             "error": f"Gemini API request failed: {str(e)}"
         }), 500
+
+
+    # ==============================
+    # GENERAL ERROR
+    # ==============================
 
     except Exception as e:
 
@@ -231,7 +283,7 @@ Do not include hashtags in this response.
 
 
 # ==============================
-# Run Flask Server
+# RUN FLASK SERVER
 # ==============================
 
 if __name__ == '__main__':
