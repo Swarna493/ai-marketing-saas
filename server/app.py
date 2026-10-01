@@ -2,6 +2,7 @@
 from flask_cors import CORS
 from dotenv import load_dotenv
 import requests
+import time
 import os
 import sqlite3
 import urllib.parse
@@ -14,7 +15,30 @@ CORS(app)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}"
+def call_gemini(payload):
+    for attempt in range(3):
+        try:
+            response = requests.post(
+                GEMINI_URL,
+                json=payload,
+                timeout=30
+            )
 
+            if response.status_code in [429, 503]:
+                if attempt < 2:
+                    wait_time = 5 * (attempt + 1)
+                    time.sleep(wait_time)
+                    continue
+
+            return response
+
+        except requests.exceptions.Timeout:
+            if attempt < 2:
+                time.sleep(5)
+                continue
+            raise
+
+    return response
 DB_NAME = "marketmate.db"
 
 
