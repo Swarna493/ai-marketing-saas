@@ -1,52 +1,37 @@
 import pandas as pd
-from sentence_transformers import SentenceTransformer, util
+import re
 
-# Load marketing dataset
 df = pd.read_csv("dataset/marketing_dataset.csv")
 
-# Combine important fields
-df["text"] = (
-    df["product"].fillna("").astype(str) + " " +
-    df["category"].fillna("").astype(str) + " " +
-    df["description"].fillna("").astype(str) + " " +
-    df["target_audience"].fillna("").astype(str) + " " +
-    df["platform"].fillna("").astype(str) + " " +
-    df["tone"].fillna("").astype(str) + " " +
-    df["keywords"].fillna("").astype(str) + " " +
-    df["brand_style"].fillna("").astype(str)
-)
 
-# Load embedding model
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Create dataset embeddings
-texts = df["text"].tolist()
-embeddings = model.encode(texts, convert_to_tensor=True)
-
-print("RAG dataset loaded successfully!")
-print("Number of records:", len(df))
-print("Embedding shape:", embeddings.shape)
-
-
-# RAG retrieval function
 def retrieve_context(query, top_k=3):
+    query_words = set(re.findall(r"\w+", query.lower()))
 
-    # Convert user query into embedding
-    query_embedding = model.encode(
-        query,
-        convert_to_tensor=True
-    )
+    scores = []
 
-    # Calculate similarity
-    scores = util.cos_sim(query_embedding, embeddings)[0]
+    for index, row in df.iterrows():
+        text = " ".join([
+            str(row.get("product", "")),
+            str(row.get("category", "")),
+            str(row.get("description", "")),
+            str(row.get("target_audience", "")),
+            str(row.get("platform", "")),
+            str(row.get("tone", "")),
+            str(row.get("keywords", "")),
+            str(row.get("brand_style", ""))
+        ]).lower()
 
-    # Get top matching records
-    top_results = scores.topk(k=min(top_k, len(df)))
+        text_words = set(re.findall(r"\w+", text))
+
+        score = len(query_words.intersection(text_words))
+        scores.append((score, index))
+
+    scores.sort(reverse=True)
 
     results = []
 
-    for score, index in zip(top_results.values, top_results.indices):
-        row = df.iloc[index.item()]
+    for score, index in scores[:top_k]:
+        row = df.iloc[index]
 
         results.append({
             "product": row["product"],
@@ -60,20 +45,3 @@ def retrieve_context(query, top_k=3):
         })
 
     return results
-
-
-# Test retrieval
-query = "eco friendly fashion product for young adults on Instagram"
-
-results = retrieve_context(query)
-
-print("\nRetrieved Marketing Context:")
-
-for result in results:
-    print("\nProduct:", result["product"])
-    print("Description:", result["description"])
-    print("Target Audience:", result["target_audience"])
-    print("Platform:", result["platform"])
-    print("Tone:", result["tone"])
-    print("Keywords:", result["keywords"])
-    print("Similarity:", round(result["similarity"], 3))
