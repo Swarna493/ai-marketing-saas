@@ -1,0 +1,12 @@
+product,category,description,target_audience,platform,tone,keywords,brand_style
+Organic Cotton T-Shirt,Fashion,"Eco-friendly cotton T-shirt made from organic materials","Young adults",Instagram,Professional,"organic cotton,eco-friendly,sustainable","Simple and modern"
+Running Shoes,Footwear,"Lightweight running shoes designed for daily exercise","Fitness enthusiasts",Instagram,Energetic,"running,fitness,comfort","Active and energetic"
+Smart Water Bottle,Electronics,"Reusable smart bottle that tracks water consumption","Students and professionals",Instagram,Professional,"hydration,smart bottle,health","Modern and informative"
+Coffee Beans,Food,"Premium roasted coffee beans with rich aroma","Coffee lovers",Instagram,Friendly,"coffee,premium,roasted","Warm and friendly"
+Wireless Earbuds,Electronics,"Wireless earbuds with clear sound and long battery life","Students and professionals",Instagram,Modern,"earbuds,audio,wireless","Modern and concise"
+Face Wash,Skincare,"Gentle face wash suitable for daily skincare","Young adults",Instagram,Friendly,"skincare,face wash,natural","Simple and friendly"
+Laptop,Electronics,"High-performance laptop suitable for students and professionals","Students and professionals",LinkedIn,Professional,"laptop,productivity,technology","Professional and informative"
+Sports Watch,Electronics,"Smart sports watch for fitness and activity tracking","Fitness enthusiasts",Instagram,Energetic,"sports,fitness,smart watch","Active and modern"
+Backpack,Accessories,"Durable backpack suitable for college and travel","Students",Instagram,Casual,"backpack,college,travel","Youthful and simple"
+Organic Green Tea,Beverage,"Natural green tea made from selected tea leaves","Health-conscious customers",Instagram,Friendly,"green tea,natural,healthy","Natural and calming"
+Get-Content marketing_dataset.csvGet-Content marketing_dataset.csv
