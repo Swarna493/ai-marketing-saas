@@ -1,81 +1,67 @@
-import csv
-import re
-import os
-
+import pandas as pd
+from sentence_transformers import SentenceTransformer, util
 
 # Load marketing dataset
-DATASET_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "dataset",
-    "marketing_dataset.csv"
+df = pd.read_csv("dataset/marketing_dataset.csv")
+
+# Combine dataset fields
+df["text"] = (
+    df["product"].fillna("").astype(str) + " " +
+    df["category"].fillna("").astype(str) + " " +
+    df["description"].fillna("").astype(str) + " " +
+    df["target_audience"].fillna("").astype(str) + " " +
+    df["platform"].fillna("").astype(str) + " " +
+    df["tone"].fillna("").astype(str) + " " +
+    df["keywords"].fillna("").astype(str) + " " +
+    df["brand_style"].fillna("").astype(str)
 )
 
-data = []
+# Load embedding model
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
-try:
-    with open(DATASET_PATH, newline="", encoding="utf-8") as file:
-        reader = csv.DictReader(file)
-        data = list(reader)
-except Exception as e:
-    print("Dataset loading error:", e)
+# Create embeddings
+texts = df["text"].tolist()
+
+embeddings = model.encode(
+    texts,
+    convert_to_tensor=True
+)
 
 
+# RAG retrieval function
 def retrieve_context(query, top_k=3):
-    """
-    Lightweight RAG retrieval.
-    Finds the most relevant dataset rows using keyword matching.
-    Does not require pandas, NumPy, PyTorch, or sentence-transformers.
-    """
 
-    query_words = set(
-        re.findall(r"\w+", str(query).lower())
+    query_embedding = model.encode(
+        query,
+        convert_to_tensor=True
     )
 
-    scores = []
+    scores = util.cos_sim(
+        query_embedding,
+        embeddings
+    )[0]
 
-    for index, row in enumerate(data):
-
-        text = " ".join([
-            str(row.get("product", "")),
-            str(row.get("category", "")),
-            str(row.get("description", "")),
-            str(row.get("target_audience", "")),
-            str(row.get("platform", "")),
-            str(row.get("tone", "")),
-            str(row.get("keywords", "")),
-            str(row.get("brand_style", ""))
-        ]).lower()
-
-        text_words = set(
-            re.findall(r"\w+", text)
-        )
-
-        # Count matching words
-        matching_words = query_words.intersection(text_words)
-        score = len(matching_words)
-
-        scores.append((score, index))
-
-    # Highest matching score first
-    scores.sort(
-        key=lambda item: item[0],
-        reverse=True
+    top_results = scores.topk(
+        k=min(top_k, len(df))
     )
 
     results = []
 
-    for score, index in scores[:top_k]:
+    for score, index in zip(
+        top_results.values,
+        top_results.indices
+    ):
 
-        row = data[index]
+        row = df.iloc[index.item()]
 
         results.append({
-            "product": row.get("product", ""),
-            "description": row.get("description", ""),
-            "target_audience": row.get("target_audience", ""),
-            "platform": row.get("platform", ""),
-            "tone": row.get("tone", ""),
-            "keywords": row.get("keywords", ""),
-            "brand_style": row.get("brand_style", ""),
+            "product": row["product"],
+            "description": row["description"],
+            "target_audience": row["target_audience"],
+            "platform": row["platform"],
+            "tone": row["tone"],
+            "keywords": row["keywords"],
+            "brand_style": row["brand_style"],
             "similarity": float(score)
         })
 
