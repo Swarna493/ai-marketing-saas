@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
-const API_BASE = 'https://ai-marketing-saas-p5e7.onrender.com'
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://ai-marketing-saas-p5e7.onrender.com'
 
 function App() {
   const [activeTab, setActiveTab] = useState('home')
@@ -22,6 +22,7 @@ function App() {
   const openModule = (id) => setActiveTab(id)
 
   const renderContent = () => {
+    if (activeTab === 'pdf') return <PDFUploader />
     if (activeTab === 'home') {
       return (
         <div className="dashboard-page">
@@ -63,6 +64,7 @@ function App() {
               <button onClick={() => setActiveTab('adcopy')}>📢 Write Ad Copy</button>
               <button onClick={() => setActiveTab('seo')}>🔎 Generate SEO Content</button>
               <button onClick={() => setActiveTab('history')}>📜 View History</button>
+              <button onClick={() => setActiveTab('pdf')}>📄 PDF Knowledge</button>
             </div>
           </section>
         </div>
@@ -123,6 +125,92 @@ function App() {
         </header>
         <main className="content-area">{renderContent()}</main>
       </div>
+    </div>
+  )
+}
+
+function PDFUploader() {
+  const [file, setFile] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [status, setStatus] = useState(null)
+
+  const checkStatus = async () => {
+    try {
+      const res = await fetch(API_BASE + '/api/pdf-status')
+      const data = await res.json()
+      setStatus(data)
+    } catch (err) {
+      setError('Unable to connect to backend.')
+    }
+  }
+
+  useEffect(() => {
+    checkStatus()
+  }, [])
+
+  const uploadPDF = async () => {
+    if (!file) {
+      setError('Please select a PDF file.')
+      return
+    }
+    setLoading(true)
+    setMessage('')
+    setError('')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch(API_BASE + '/api/upload-pdf', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'PDF upload failed')
+      setMessage(`✅ ${data.filename} uploaded successfully. ${data.chunks} chunk(s) created.`)
+      setFile(null)
+      await checkStatus()
+    } catch (err) {
+      setError(err.message || 'Failed to upload PDF.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const clearPDF = async () => {
+    try {
+      const res = await fetch(API_BASE + '/api/clear-pdf', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to clear PDF')
+      setMessage('🗑️ Uploaded PDF knowledge has been cleared.')
+      setError('')
+      await checkStatus()
+    } catch (err) {
+      setError(err.message || 'Failed to clear PDF.')
+    }
+  }
+
+  return (
+    <div className="card wide-card">
+      <h1>📄 PDF Knowledge Base</h1>
+      <p className="subtitle">Upload a marketing PDF and use its information for AI content generation.</p>
+      <div className="form-group">
+        <label>Select Marketing PDF</label>
+        <input type="file" accept=".pdf,application/pdf" onChange={(e) => { setFile(e.target.files[0] || null); setMessage(''); setError('') }} />
+      </div>
+      {file && <p className="info-msg">📎 Selected: {file.name}</p>}
+      <div className="form-row">
+        <button className="generate-btn" onClick={uploadPDF} disabled={loading}>
+          {loading ? 'Uploading...' : '📤 Upload PDF'}
+        </button>
+        <button className="copy-btn" onClick={clearPDF}>🗑️ Clear PDF</button>
+      </div>
+      {message && <p className="info-msg">{message}</p>}
+      {error && <p className="error">❌ {error}</p>}
+      {status && (
+        <div className="result-box">
+          <h3>Knowledge Base Status</h3>
+          <p>PDF Loaded: <strong>{status.pdf_loaded ? 'Yes ✅' : 'No ❌'}</strong></p>
+          <p>Chunks: <strong>{status.chunks}</strong></p>
+        </div>
+      )}
     </div>
   )
 }
