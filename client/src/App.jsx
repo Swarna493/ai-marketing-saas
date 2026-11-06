@@ -347,7 +347,7 @@ function SEOWriter() {
       const res = await fetch(API_BASE + '/api/generate-seo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: keyword })
+        body: JSON.stringify({ topic: keyword, keyword: keyword })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error')
@@ -400,7 +400,7 @@ function EmailWriter() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error')
-      setEmailContent(data.email_content)
+      setEmailContent(data.email)
     } catch (err) {
       setError('Failed to generate. Check backend server.')
     } finally {
@@ -613,7 +613,7 @@ function Scheduler() {
     try {
       const res = await fetch(API_BASE + '/api/scheduled-posts')
       const data = await res.json()
-      setPosts(data.posts || [])
+      setPosts(Array.isArray(data) ? data : (data.posts || []))
     } catch (err) {
       console.error(err)
     }
@@ -714,7 +714,7 @@ function Analytics() {
       <p className="subtitle">Track your content generation activity</p>
       <div className="stats-grid">
         <div className="stat-box">
-          <h2>{stats.total_generated}</h2>
+          <h2>{stats.total_content}</h2>
           <p>Total Content Generated</p>
         </div>
         <div className="stat-box">
@@ -726,28 +726,28 @@ function Analytics() {
       <div className="breakdown">
         <div className="bar-row">
           <span>Captions</span>
-          <div className="bar"><div className="bar-fill" style={barWidth(stats.breakdown.captions)}></div></div>
-          <span>{stats.breakdown.captions}</span>
+          <div className="bar"><div className="bar-fill" style={barWidth((stats.module_usage?.caption || stats.module_usage?.captions || 0))}></div></div>
+          <span>{(stats.module_usage?.caption || stats.module_usage?.captions || 0)}</span>
         </div>
         <div className="bar-row">
           <span>Hashtags</span>
-          <div className="bar"><div className="bar-fill" style={barWidth(stats.breakdown.hashtags)}></div></div>
-          <span>{stats.breakdown.hashtags}</span>
+          <div className="bar"><div className="bar-fill" style={barWidth((stats.module_usage?.hashtag || stats.module_usage?.hashtags || 0))}></div></div>
+          <span>{(stats.module_usage?.hashtag || stats.module_usage?.hashtags || 0)}</span>
         </div>
         <div className="bar-row">
           <span>SEO Content</span>
-          <div className="bar"><div className="bar-fill" style={barWidth(stats.breakdown.seo)}></div></div>
-          <span>{stats.breakdown.seo}</span>
+          <div className="bar"><div className="bar-fill" style={barWidth((stats.module_usage?.seo || 0))}></div></div>
+          <span>{(stats.module_usage?.seo || 0)}</span>
         </div>
         <div className="bar-row">
           <span>Emails</span>
-          <div className="bar"><div className="bar-fill" style={barWidth(stats.breakdown.emails)}></div></div>
-          <span>{stats.breakdown.emails}</span>
+          <div className="bar"><div className="bar-fill" style={barWidth((stats.module_usage?.email || stats.module_usage?.emails || 0))}></div></div>
+          <span>{(stats.module_usage?.email || stats.module_usage?.emails || 0)}</span>
         </div>
         <div className="bar-row">
           <span>Competitor</span>
-          <div className="bar"><div className="bar-fill" style={barWidth(stats.breakdown.competitor)}></div></div>
-          <span>{stats.breakdown.competitor}</span>
+          <div className="bar"><div className="bar-fill" style={barWidth((stats.module_usage?.competitor || 0))}></div></div>
+          <span>{(stats.module_usage?.competitor || 0)}</span>
         </div>
       </div>
     </div>
