@@ -400,7 +400,7 @@ function EmailWriter() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error')
-      setEmailContent(data.email_content)
+      setEmailContent(data.email || data.email_content || '')
     } catch (err) {
       setError('Failed to generate. Check backend server.')
     } finally {
@@ -613,7 +613,7 @@ function Scheduler() {
     try {
       const res = await fetch(API_BASE + '/api/scheduled-posts')
       const data = await res.json()
-      setPosts(data.posts || [])
+      setPosts(Array.isArray(data) ? data : (data.posts || []))
     } catch (err) {
       console.error(err)
     }
@@ -697,7 +697,17 @@ function Analytics() {
   useEffect(() => {
     fetch(API_BASE + '/api/analytics')
       .then(res => res.json())
-      .then(data => setStats(data))
+      .then(data => setStats({
+  total_generated: data.total_content ?? data.total_generated ?? 0,
+  total_scheduled: data.total_scheduled ?? 0,
+  breakdown: {
+    captions: data.module_usage?.caption ?? data.breakdown?.captions ?? 0,
+    hashtags: data.module_usage?.hashtag ?? data.breakdown?.hashtags ?? 0,
+    seo: data.module_usage?.seo ?? data.breakdown?.seo ?? 0,
+    emails: data.module_usage?.email ?? data.breakdown?.emails ?? 0,
+    competitor: data.module_usage?.competitor ?? data.breakdown?.competitor ?? 0
+  }
+}))
       .catch(err => console.error(err))
   }, [])
 
@@ -753,197 +763,45 @@ function Analytics() {
     </div>
   )
 }
-
 function History() {
   const [history, setHistory] = useState([])
 
   useEffect(() => {
     fetch(API_BASE + '/api/history')
-      .then(res => res.json())
-      .then(data => setHistory(data.history || []))
-      .catch(err => console.error(err))
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch history')
+        return res.json()
+      })
+      .then(data => {
+        setHistory(Array.isArray(data) ? data : (data.history || []))
+      })
+      .catch(err => console.error('History error:', err))
   }, [])
 
   return (
     <div className="card wide-card">
       <h1>🕐 History</h1>
       <p className="subtitle">All your generated content</p>
-      {history.length === 0 && <p className="empty-msg">No history yet. Generate some content first!</p>}
+
+      {history.length === 0 && (
+        <p className="empty-msg">No history yet. Generate some content first!</p>
+      )}
+
       <div className="history-list">
-        {history.map((item) => (
-          <div key={item.id} className="history-item">
-            <span className={'history-tag tag-' + item.type}>{item.type}</span>
-            <p className="history-input">Input: {item.input_text}</p>
-            <p className="history-output">{item.output_text}</p>
-          </div>
-        ))}
+        {history.map((item) => {
+          const moduleName = item.module || item.type || 'content'
+
+          return (
+            <div key={item.id} className="history-item">
+              <span className={'history-tag tag-' + moduleName}>
+                {moduleName}
+              </span>
+              <p className="history-input">Input: {item.input_text}</p>
+              <p className="history-output">{item.output_text}</p>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
 }
-
-function AdCopyGenerator() {
-  const [product, setProduct] = useState('')
-  const [platform, setPlatform] = useState('Google Ads')
-  const [adCopy, setAdCopy] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const generate = async () => {
-    if (!product.trim()) { setError('Please enter a product!'); return }
-    setLoading(true); setError(''); setAdCopy('')
-    try {
-      const res = await fetch(API_BASE + '/api/generate-ad-copy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product: product, platform: platform })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Error')
-      setAdCopy(data.ad_copy)
-    } catch (err) {
-      setError('Failed to generate. Check backend server.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="card">
-      <h1>📢 Ad Copy Generator</h1>
-      <p className="subtitle">Generate persuasive ad copy for your campaigns</p>
-      <div className="form-group">
-        <label>Product / Service</label>
-        <input type="text" placeholder="e.g. wireless earbuds" value={product} onChange={(e) => setProduct(e.target.value)} />
-      </div>
-      <div className="form-group">
-        <label>Ad Platform</label>
-        <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
-          <option value="Google Ads">Google Ads</option>
-          <option value="Facebook Ads">Facebook Ads</option>
-          <option value="Instagram Ads">Instagram Ads</option>
-          <option value="LinkedIn Ads">LinkedIn Ads</option>
-        </select>
-      </div>
-      <button className="generate-btn" onClick={generate} disabled={loading}>
-        {loading ? 'Generating...' : 'Generate Ad Copy 📢'}
-      </button>
-      {error && <p className="error">{error}</p>}
-      {adCopy && (
-        <div className="result-box">
-          <h3>Your Ad Copy:</h3>
-          <p>{adCopy}</p>
-          <button className="copy-btn" onClick={() => { navigator.clipboard.writeText(adCopy); alert('Copied!') }}>📋 Copy</button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ProductDescGenerator() {
-  const [productName, setProductName] = useState('')
-  const [features, setFeatures] = useState('')
-  const [description, setDescription] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const generate = async () => {
-    if (!productName.trim()) { setError('Please enter a product name!'); return }
-    setLoading(true); setError(''); setDescription('')
-    try {
-      const res = await fetch(API_BASE + '/api/generate-product-description', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_name: productName, features: features })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Error')
-      setDescription(data.description)
-    } catch (err) {
-      setError('Failed to generate. Check backend server.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="card">
-      <h1>🛍️ Product Description Generator</h1>
-      <p className="subtitle">Create compelling e-commerce product descriptions</p>
-      <div className="form-group">
-        <label>Product Name</label>
-        <input type="text" placeholder="e.g. Leather Laptop Backpack" value={productName} onChange={(e) => setProductName(e.target.value)} />
-      </div>
-      <div className="form-group">
-        <label>Key Features (optional)</label>
-        <input type="text" placeholder="e.g. waterproof, USB charging port, 15L capacity" value={features} onChange={(e) => setFeatures(e.target.value)} />
-      </div>
-      <button className="generate-btn" onClick={generate} disabled={loading}>
-        {loading ? 'Generating...' : 'Generate Description 🛍️'}
-      </button>
-      {error && <p className="error">{error}</p>}
-      {description && (
-        <div className="result-box">
-          <h3>Product Description:</h3>
-          <p>{description}</p>
-          <button className="copy-btn" onClick={() => { navigator.clipboard.writeText(description); alert('Copied!') }}>📋 Copy</button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SloganGenerator() {
-  const [businessName, setBusinessName] = useState('')
-  const [industry, setIndustry] = useState('')
-  const [slogans, setSlogans] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const generate = async () => {
-    if (!businessName.trim()) { setError('Please enter a business name!'); return }
-    setLoading(true); setError(''); setSlogans('')
-    try {
-      const res = await fetch(API_BASE + '/api/generate-slogan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ business_name: businessName, industry: industry })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Error')
-      setSlogans(data.slogans)
-    } catch (err) {
-      setError('Failed to generate. Check backend server.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="card">
-      <h1>💡 Brand Slogan Generator</h1>
-      <p className="subtitle">Generate catchy taglines for your brand</p>
-      <div className="form-group">
-        <label>Business Name</label>
-        <input type="text" placeholder="e.g. BrewHouse Coffee" value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
-      </div>
-      <div className="form-group">
-        <label>Industry</label>
-        <input type="text" placeholder="e.g. coffee shop / cafe" value={industry} onChange={(e) => setIndustry(e.target.value)} />
-      </div>
-      <button className="generate-btn" onClick={generate} disabled={loading}>
-        {loading ? 'Generating...' : 'Generate Slogans 💡'}
-      </button>
-      {error && <p className="error">{error}</p>}
-      {slogans && (
-        <div className="result-box">
-          <h3>Your Slogans:</h3>
-          <p>{slogans}</p>
-          <button className="copy-btn" onClick={() => { navigator.clipboard.writeText(slogans); alert('Copied!') }}>📋 Copy</button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default App
